@@ -66,6 +66,32 @@ export const KEY_SETUP_KEYS = Object.freeze([
     tier: 'metered',
   }),
   Object.freeze({
+    id: 'openai-selfhost',
+    title: 'SELF-HOSTED LLM', // i18n-ignore: config row title, not a feed name
+    unlocks: msg(
+      'Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.',
+    ),
+    getUrl: 'https://ollama.com',
+    envVars: Object.freeze(['OPENAI_BASE_URL']),
+    tier: 'local',
+    // A URL, not a key: the panel refuses a value that is not http(s).
+    shape: 'url',
+    // Config, not a key — never counted into the POWER UP chip's waiting
+    // total, and fine to leave blank forever.
+    optional: true,
+  }),
+  Object.freeze({
+    id: 'openai-model',
+    title: 'OPENAI CHAT MODEL', // i18n-ignore: config row title, not a feed name
+    unlocks: msg(
+      'Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.',
+    ),
+    getUrl: 'https://platform.openai.com/docs/models',
+    envVars: Object.freeze(['OPENAI_CHAT_MODEL']),
+    tier: 'local',
+    optional: true,
+  }),
+  Object.freeze({
     id: 'gemini',
     title: 'GEMINI', // i18n-ignore: provider product name
     unlocks: msg('Gemini Live voice control'),
@@ -503,13 +529,18 @@ export function keySetupStatus(env = {}) {
       envVars: [...entry.envVars],
       tier: entry.tier,
       clientExposed: Boolean(entry.clientExposed),
+      optional: Boolean(entry.optional),
       set,
     };
   });
+  // Optional rows (configuration like OPENAI_BASE_URL) show their state but
+  // never count into the POWER UP chip's waiting total: a blank self-hosted
+  // endpoint is the normal, fully-powered state, not a missing key.
+  const required = keys.filter((key) => !key.optional);
   return {
     keys,
-    setCount: keys.filter((key) => key.set).length,
-    total: keys.length,
+    setCount: required.filter((key) => key.set).length,
+    total: required.length,
   };
 }
 
@@ -544,6 +575,13 @@ export function validateKeySetupUpdates(body) {
     };
   }
   const known = knownKeySetupEnvVars();
+  const shapes = new Map();
+  for (const entry of KEY_SETUP_KEYS) {
+    for (const name of entry.envVars) {
+      known.add(name);
+      if (entry.shape) shapes.set(name, entry.shape);
+    }
+  }
   const updates = {};
   for (const [name, raw] of entries) {
     if (!known.has(name))
@@ -600,6 +638,23 @@ export function validateKeySetupUpdates(body) {
         code: 'invalid-char',
         params: { name },
       };
+    }
+    // A URL-shaped value (OPENAI_BASE_URL) must already parse: a typo would
+    // otherwise only surface later as a 503 from the chat route.
+    if (shapes.get(name) === 'url') {
+      let parsed = null;
+      try {
+        parsed = new URL(value);
+      } catch {
+        /* refused below */
+      }
+      if (!parsed || !['http:', 'https:'].includes(parsed.protocol))
+        return {
+          ok: false,
+          error: `${name} must be an http(s) URL`,
+          code: 'invalid-url',
+          params: { name },
+        };
     }
     updates[name] = value;
   }

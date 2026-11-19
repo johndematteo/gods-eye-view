@@ -64,7 +64,19 @@ test('the status payload reports presence without any credential material', () =
     // Secret missing: the OpenSky pair must read as NOT set.
   };
   const status = keySetupStatus(env);
-  assert.equal(status.total, KEY_SETUP_KEYS.filter((key) => !key.hidden).length);
+  // Optional rows (config like OPENAI_BASE_URL) render but never count into
+  // the waiting total: a blank self-hosted endpoint is fully powered.
+  assert.equal(
+    status.total,
+    KEY_SETUP_KEYS.filter((key) => !key.hidden && !key.optional).length,
+  );
+  assert.equal(
+    status.keys.length,
+    KEY_SETUP_KEYS.filter((key) => !key.hidden).length,
+  );
+  const selfhost = status.keys.find((key) => key.id === 'openai-selfhost');
+  assert.equal(selfhost.optional, true);
+  assert.equal(selfhost.set, false);
   const google = status.keys.find((key) => key.id === 'google-maps');
   assert.equal(google.set, true);
   const opensky = status.keys.find((key) => key.id === 'opensky');
@@ -109,9 +121,12 @@ test('Windows owner SID parsing reads only the structured user-SID CSV field', (
 test('validation accepts every registry env var and only those', () => {
   const known = knownKeySetupEnvVars();
   for (const name of known) {
-    const verdict = validateKeySetupUpdates({ [name]: 'valid-value-123' });
+    // A URL-shaped value (OPENAI_BASE_URL) must be a real http(s) URL; every
+    // other registry value is a plain key/token-shaped string.
+    const value = name === 'OPENAI_BASE_URL' ? 'http://localhost:11434/v1' : 'valid-value-123';
+    const verdict = validateKeySetupUpdates({ [name]: value });
     assert.equal(verdict.ok, true, `${name} should validate`);
-    assert.equal(verdict.updates[name], 'valid-value-123');
+    assert.equal(verdict.updates[name], value);
   }
   assert.equal(validateKeySetupUpdates({ PATH: '/usr/bin' }).ok, false, 'PATH must be refused');
   assert.equal(validateKeySetupUpdates({ NODE_OPTIONS: '--x' }).ok, false, 'NODE_OPTIONS must be refused');

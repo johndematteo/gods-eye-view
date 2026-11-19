@@ -28,6 +28,9 @@ const refusals = () => [
   validateKeySetupUpdates(
     collectKeyUpdates([{ envVar: 'OPENAI_API_KEY', value: 'sk abc123' }]),
   ),
+  validateKeySetupUpdates(
+    collectKeyUpdates([{ envVar: 'OPENAI_BASE_URL', value: 'localhost:11434' }]),
+  ),
   validateKeySetupUpdates({ OPENAI_API_KEY: 'x'.repeat(600) }),
   validateKeySetupUpdates({ OPENAI_API_KEY: ' ' }),
   validateKeySetupUpdates({ OPENAI_API_KEY: 42 }),

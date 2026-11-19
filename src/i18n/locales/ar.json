@@ -4550,5 +4550,9 @@
   "Move down": "نقل لأسفل",
   "Click a shot to go to it, double-click to rename.": "انقر على لقطة للانتقال إليها، وانقر عليها نقرًا مزدوجًا لإعادة تسميتها.",
   "Back to live at the starting view": "العودة إلى البث المباشر في العرض الأولي",
-  "Exit cockpit to fly to a bike share city": "اخرج من قمرة القيادة للانتقال إلى مدينة بها مشاركة دراجات"
+  "Exit cockpit to fly to a bike share city": "اخرج من قمرة القيادة للانتقال إلى مدينة بها مشاركة دراجات",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "يوجّه الدردشة النصية وملخص HUD إلى خادمك المتوافق مع OpenAI (Ollama أو llama.cpp أو vLLM أو LM Studio...). يبقى التحكم الصوتي على مزوّدي السحابة. اتركه فارغًا لاستخدام api.openai.com.",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "معرّف النموذج الذي يخدمه الخادم للدردشة النصية (الخادم المستضاف ذاتيًا يستخدم أسماءه الخاصة). الافتراضي gpt-4.1-mini.",
+  "Local configuration — your own server, no key needed": "إعداد محلي — خادمك الخاص، بدون مفتاح",
+  "{name} must be an http(s) URL": "يجب أن يكون {name} رابط http(s)"
 }

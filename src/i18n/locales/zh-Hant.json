@@ -4035,5 +4035,9 @@
   "Move down": "下移",
   "Click a shot to go to it, double-click to rename.": "單擊鏡頭即可轉到該鏡頭，雙擊可重命名。",
   "Back to live at the starting view": "回到實時並返回初始視圖",
-  "Exit cockpit to fly to a bike share city": "退出駕駛艙以飛往有共享單車的城市"
+  "Exit cockpit to fly to a bike share city": "退出駕駛艙以飛往有共享單車的城市",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "將文本聊天和 HUD 摘要指向你自建的 OpenAI 兼容服務器(Ollama、llama.cpp、vLLM、LM Studio 等)。語音仍使用雲端提供商。留空則使用 api.openai.com。",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "文本聊天使用的模型 id(自建服務器用其自己的名稱)。默認 gpt-4.1-mini。",
+  "Local configuration — your own server, no key needed": "本地配置 — 你自己的服務器,無需密鑰",
+  "{name} must be an http(s) URL": "{name}必須是 http(s) URL"
 }

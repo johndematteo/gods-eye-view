@@ -4241,5 +4241,9 @@
   "Move down": "Bajar",
   "Click a shot to go to it, double-click to rename.": "Haz clic en un plano para ir a él y doble clic para cambiarle el nombre.",
   "Back to live at the starting view": "Volver al directo en la vista inicial",
-  "Exit cockpit to fly to a bike share city": "Sal de la cabina para volar a una ciudad con bicicletas compartidas"
+  "Exit cockpit to fly to a bike share city": "Sal de la cabina para volar a una ciudad con bicicletas compartidas",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "Apunta el chat de texto y el resumen del HUD a tu propio servidor compatible con OpenAI (Ollama, llama.cpp, vLLM, LM Studio…). La voz sigue en los proveedores de nube. Déjalo vacío para api.openai.com.",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "Identificador del modelo que el endpoint sirve para el chat de texto (uno autohospedado sirve sus propios nombres). Por defecto: gpt-4.1-mini.",
+  "Local configuration — your own server, no key needed": "Configuración local — tu propio servidor, sin clave",
+  "{name} must be an http(s) URL": "{name} debe ser una URL http(s)"
 }

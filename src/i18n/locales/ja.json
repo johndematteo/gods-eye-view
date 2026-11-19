@@ -4035,5 +4035,9 @@
   "Move down": "下へ移動",
   "Click a shot to go to it, double-click to rename.": "ショットをクリックしてそこへ移動、ダブルクリックで名前を変更します。",
   "Back to live at the starting view": "ライブに戻り、最初の表示へ",
-  "Exit cockpit to fly to a bike share city": "シェアサイクルのある都市へ移動するにはコックピットを終了してください"
+  "Exit cockpit to fly to a bike share city": "シェアサイクルのある都市へ移動するにはコックピットを終了してください",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "テキストチャットとHUD要約を、OpenAI互換のサーバー(Ollama、llama.cpp、vLLM、LM Studioなど)に向けます。音声はクラウドプロバイダーを使い続けます。api.openai.comを使う場合は空欄のままにします。",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "テキストチャットでエンドポイントが使うモデルid(セルフホストでは独自の名前)。既定はgpt-4.1-mini。",
+  "Local configuration — your own server, no key needed": "ローカル設定 — 自前のサーバー、キー不要",
+  "{name} must be an http(s) URL": "{name}はhttp(s)のURLである必要があります"
 }

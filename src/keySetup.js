@@ -90,6 +90,7 @@ const SAVE_REFUSALS = Object.freeze({
   'invalid-char': msg(
     '{name} contains a character that is not valid in a key (#, quotes, $, \\, or backtick)',
   ),
+  'invalid-url': msg('{name} must be an http(s) URL'),
   external: msg(
     '{name} is configured outside Provider Settings and can only be changed where it was set',
   ),
@@ -221,7 +222,12 @@ export function stripKeylessBasemapFromHash(hash) {
   }
 }
 
-const TIER_DOTS = Object.freeze({ metered: '🔴', paid: '🔴', free: '🟡' });
+const TIER_DOTS = Object.freeze({
+  metered: '🔴',
+  paid: '🔴',
+  free: '🟡',
+  local: '🟢',
+});
 
 /** One key row as the view renders it, from the status payload's own text. */
 function presentRow(key) {
@@ -237,7 +243,9 @@ function presentRow(key) {
         ? t('Metered — a billing-enabled account')
         : key.tier === 'paid'
           ? t('Optional paid token — public access works without one')
-          : t('Free key — register, paste, done'),
+          : key.tier === 'local'
+            ? t('Local configuration — your own server, no key needed')
+            : t('Free key — register, paste, done'),
     clientExposed: Boolean(key.clientExposed),
     getUrl: key.getUrl,
     unlocks: t(key.unlocks),
