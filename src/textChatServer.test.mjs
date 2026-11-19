@@ -690,6 +690,81 @@ test('the ChatGPT OAuth lock refuses OpenAI chat but not Gemini chat', async (t)
   }
 });
 
+test('self-hosted OPENAI_BASE_URL: keyless chat, minimal body, no auth header', async (t) => {
+  const f = await fixture(t, providers.openai, undefined, {
+    resolveApiKey: () => '',
+    resolveChatModel: () => 'qwen2.5:7b',
+    resolveEndpoint: () => ({
+      baseUrl: 'http://localhost:11434/v1',
+      selfHosted: true,
+    }),
+  });
+  const response = await f.send();
+  assert.equal(response.status, 200, 'a self-hosted endpoint wants no key');
+  assert.equal(f.calls.length, 1);
+  const { url, body, options } = f.calls[0];
+  assert.equal(url, 'http://localhost:11434/v1/chat/completions');
+  assert.equal(options.headers.Authorization, undefined);
+  assert.equal(body.max_tokens, 4096);
+  assert.equal(body.store, undefined);
+  assert.equal(body.tools[0].function.strict, undefined);
+});
+
+test('self-hosted model ids may carry registry slashes and colons', async (t) => {
+  for (const model of [
+    'hf.co/Qwen/Qwen2.5-7B-Instruct',
+    'mistralai/Mistral-7B-Instruct-v0.3',
+    'llama3.2:latest',
+  ]) {
+    const f = await fixture(t, providers.openai, undefined, {
+      resolveApiKey: () => '',
+      resolveChatModel: () => model,
+      resolveEndpoint: () => ({
+        baseUrl: 'http://localhost:11434/v1',
+        selfHosted: true,
+      }),
+    });
+    assert.equal((await f.send()).status, 200, model);
+    assert.equal(f.calls[0].body.model, model);
+  }
+});
+
+test('cloud chat still refuses keyless and still guards realtime model names', async (t) => {
+  const keyless = await fixture(t, providers.openai, undefined, {
+    resolveApiKey: () => '',
+  });
+  const response = await keyless.send();
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).code, 'API_KEY_MISSING');
+  const audio = await fixture(t, providers.openai, undefined, {
+    resolveApiKey: () => 'k',
+    resolveChatModel: () => 'whisper-audio-1',
+  });
+  assert.equal((await audio.send()).status, 503);
+});
+
+test('an unusable OPENAI_BASE_URL refuses instead of silently calling OpenAI', async (t) => {
+  const f = await fixture(t, providers.openai, undefined, {
+    resolveApiKey: () => 'k',
+    resolveEndpoint: () => null,
+  });
+  const response = await f.send();
+  assert.equal(response.status, 503);
+  assert.equal(f.calls.length, 0, 'no upstream request may leave');
+});
+
+test('the ChatGPT OAuth billing lock does not touch self-hosted chat', async (t) => {
+  const f = await fixture(t, providers.openai, undefined, {
+    resolveApiKey: () => '',
+    environment: { GEV_PREFER_CODEX_OAUTH: 'true' },
+    resolveEndpoint: () => ({
+      baseUrl: 'http://localhost:11434/v1',
+      selfHosted: true,
+    }),
+  });
+  assert.equal((await f.send()).status, 200);
+});
+
 test('OpenAI empty tool arrays are removed before history is returned', async (t) => {
   const f = await fixture(t, providers.openai, async () =>
     Response.json({

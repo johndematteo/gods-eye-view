@@ -4138,5 +4138,9 @@
   "Move down": "Flytta ned",
   "Click a shot to go to it, double-click to rename.": "Klicka på en tagning för att gå till den, dubbelklicka för att byta namn.",
   "Back to live at the starting view": "Tillbaka till live i startvyn",
-  "Exit cockpit to fly to a bike share city": "Lämna cockpit för att flyga till en stad med lånecyklar"
+  "Exit cockpit to fly to a bike share city": "Lämna cockpit för att flyga till en stad med lånecyklar",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "Riktar textchatten och HUD-sammanfattningen mot din egen OpenAI-kompatibla server (Ollama, llama.cpp, vLLM, LM Studio…). Röststyrningen stannar hos molnleverantörerna. Lämna tomt för api.openai.com.",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "Modell-id som endpointen serverar för textchatten (en self-hostad serverar sina egna namn). Standard: gpt-4.1-mini.",
+  "Local configuration — your own server, no key needed": "Lokal konfiguration — din egen server, ingen nyckel behövs",
+  "{name} must be an http(s) URL": "{name} måste vara en http(s)-URL"
 }

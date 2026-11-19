@@ -63,6 +63,11 @@ export function createTextChatHandler({
   providerPerMin = 30,
   // Returns { error, code } when the route must refuse before any key is used.
   refuse = () => null,
+  // False lets a request through with NO key at all — the self-hosted
+  // OpenAI-compatible endpoint case, where the operator's own server usually
+  // wants no Authorization header. The headers() callback decides what an
+  // empty key means on the wire.
+  requireApiKey = () => true,
   now = Date.now,
   timeoutMs = 60000,
 } = {}) {
@@ -107,7 +112,7 @@ export function createTextChatHandler({
       const refusal = refuse();
       if (refusal) return reply(503, refusal.error, refusal.code);
       const apiKey = String(resolveApiKey() || '').trim();
-      if (!apiKey)
+      if (!apiKey && requireApiKey())
         return reply(
           503,
           'Add an API key in Provider Settings',
@@ -198,7 +203,9 @@ export function createTextChatHandler({
       lifetime.signal.throwIfAborted();
       usage = parseUsage(provider, data);
       const result = parse(data);
-      if (!result || JSON.stringify(result).includes(apiKey))
+      // An empty key (self-hosted keyless) must not trip the leak check:
+      // `.includes('')` is always true.
+      if (!result || (apiKey && JSON.stringify(result).includes(apiKey)))
         return reply(502, { error: FAILURE, usage });
       reply(200, { ...result, usage });
     } catch (error) {

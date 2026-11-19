@@ -5,6 +5,7 @@ import { invalidCalls } from '../common/textTools.js';
 import { textInstructions } from '../common/textInstructions.js';
 import { GEV_REALTIME_TOOLS, offeredTools } from './tools.js';
 import { resolveOverpassUpstreams } from '../overpass/constants.js';
+import { resolveOpenAiEndpoint } from './endpoint.js';
 
 const object = (value) =>
   value && typeof value === 'object' && !Array.isArray(value);
@@ -97,6 +98,9 @@ export function createOpenAiChatHandler({
   resolveApiKey = () => process.env.OPENAI_API_KEY,
   resolveChatModel = () => process.env.OPENAI_CHAT_MODEL || 'gpt-4.1-mini',
   resolveProviderRateLimit = () => process.env.GEV_RATELIMIT_OPENAI_PER_MIN,
+  // Where the chat request goes: api.openai.com, or the operator's own
+  // OpenAI-compatible server via OPENAI_BASE_URL (see endpoint.js).
+  resolveEndpoint = (env = environment) => resolveOpenAiEndpoint(env),
   environment = process.env,
   ...options
 } = {}) {
@@ -106,8 +110,13 @@ export function createOpenAiChatHandler({
     resolveApiKey,
     resolveProviderRateLimit,
     providerPerMin: OPENAI_DEFAULT_PER_MIN,
+    // A self-hosted endpoint bills no OpenAI key, so the operator lock that
+    // forbids API-key spending is meaningless there — the Codex OAuth refusal
+    // applies only when the request actually goes to api.openai.com.
+    requireApiKey: () => !resolveEndpoint(environment)?.selfHosted,
     // Chat can only bill the API key, which this operator lock forbids.
     refuse() {
+      if (resolveEndpoint(environment)?.selfHosted) return null;
       let error =
         'ChatGPT OAuth is required by GEV_PREFER_CODEX_OAUTH, and typed OpenAI chat needs an API key.';
       try {
@@ -118,12 +127,18 @@ export function createOpenAiChatHandler({
       return { error, code: 'CODEX_OAUTH_REQUIRED' };
     },
     prepare(input) {
+      const endpoint = resolveEndpoint(environment);
+      if (!endpoint) return { errorStatus: 503 };
+      const { baseUrl, selfHosted } = endpoint;
       const model = String(resolveChatModel()).trim();
-      if (
-        !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/.test(model) ||
-        /realtime|audio|tts/i.test(model)
-      )
-        return { errorStatus: 503 };
+      // OpenAI's own ids are letters, digits and . _ : -; a self-hosted
+      // server also serves registry-style ids with slashes (@, /) and may
+      // name anything, so the realtime/audio guard is cloud-only too.
+      const validModel = selfHosted
+        ? /^[a-zA-Z0-9][a-zA-Z0-9._:/@-]{0,199}$/.test(model)
+        : /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/.test(model) &&
+          !/realtime|audio|tts/i.test(model);
+      if (!validModel) return { errorStatus: 503 };
       if (
         !object(input) ||
         !keys(input, ['messages']) ||
@@ -132,14 +147,19 @@ export function createOpenAiChatHandler({
         return null;
       const overpass = overpassConfigured();
       return {
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        headers: (key) => ({ Authorization: `Bearer ${key}` }),
+        endpoint: `${baseUrl}/chat/completions`,
+        // Self-hosted servers usually want no key at all; then no
+        // Authorization header is sent rather than an empty bearer.
+        headers: (key) =>
+          key ? { Authorization: `Bearer ${key}` } : {},
         body: {
           model,
           n: 1,
           stream: false,
-          store: false,
-          max_completion_tokens: 4096,
+          // OpenAI-only accounting fields that stricter compatible servers
+          // answer 400 to; the minimal self-hosted body stays to the spec.
+          ...(selfHosted ? {} : { store: false }),
+          ...(selfHosted ? { max_tokens: 4096 } : { max_completion_tokens: 4096 }),
           messages: [
             {
               role: 'system',
@@ -154,7 +174,7 @@ export function createOpenAiChatHandler({
                 name,
                 description,
                 parameters: chatSchema(parameters),
-                strict: false,
+                ...(selfHosted ? {} : { strict: false }),
               },
             }),
           ),

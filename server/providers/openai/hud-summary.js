@@ -12,6 +12,7 @@ import {
 import { enforceRateLimit, openAiRateLimiter } from './rate-limit.js';
 import { readRequestBody } from '../common/request.js';
 import { OPENAI_HUD_SUMMARY_MODEL_DEFAULT } from './constants.js';
+import { resolveOpenAiEndpoint } from './endpoint.js';
 
 function extractOpenAiResponseText(data) {
   if (typeof data?.output_text === 'string' && data.output_text.trim()) {
@@ -23,6 +24,16 @@ function extractOpenAiResponseText(data) {
     .map((part) => part?.text || part?.output_text || '')
     .join(' ')
     .trim();
+}
+
+/**
+ * Chat Completions answers `choices[0].message.content`. Local models often
+ * wrap the JSON in a markdown code fence, so a fenced reply is unwrapped.
+ */
+function extractChatText(data) {
+  const text = String(data?.choices?.[0]?.message?.content ?? '').trim();
+  const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text);
+  return fenced ? fenced[1].trim() : text;
 }
 
 /** Parse the summary and normalize the canonical feed state. */
@@ -80,15 +91,19 @@ function capAtWord(text, max, locale) {
 }
 
 async function handleHudSummary(req, res) {
+  const endpoint = resolveOpenAiEndpoint(process.env);
+  const selfHosted = endpoint?.selfHosted ?? false;
   // Capability probe: lets the HUD skip its paid place lookups when there is
-  // no summary to feed them to.
+  // no summary to feed them to. A self-hosted endpoint (OPENAI_BASE_URL)
+  // counts as configured even with no key: it usually wants none.
   if (req.method === 'GET' && req.url?.split('?')[0] === '/status') {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.end(
       JSON.stringify({
-        configured: !keylessHudSummaryResponse(process.env.OPENAI_API_KEY),
+        configured:
+          !keylessHudSummaryResponse(process.env.OPENAI_API_KEY) || selfHosted,
       }),
     );
     return;
@@ -101,7 +116,9 @@ async function handleHudSummary(req, res) {
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
-  const keyless = keylessHudSummaryResponse(apiKey);
+  // The graceful keyless response only applies to the cloud endpoint; a
+  // self-hosted one is configured with or without a key.
+  const keyless = selfHosted ? null : keylessHudSummaryResponse(apiKey);
   if (keyless) {
     res.statusCode = keyless.statusCode;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -118,26 +135,56 @@ async function handleHudSummary(req, res) {
   try {
     const body = await readRequestBody(req, 64 * 1024);
     const context = JSON.parse(body || '{}');
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+    const model =
+      process.env.OPENAI_HUD_SUMMARY_MODEL || OPENAI_HUD_SUMMARY_MODEL_DEFAULT;
+    // Self-hosted servers implement Chat Completions, not the Responses API,
+    // and answer a 400 to OpenAI-only fields — a minimal body, JSON asked for
+    // by the prompt alone, with the existing tolerant parse as the safety net.
+    const response = await fetch(
+      selfHosted
+        ? `${endpoint.baseUrl}/chat/completions`
+        : 'https://api.openai.com/v1/responses',
+      {
+        method: 'POST',
+        headers: {
+          // A keyless self-hosted endpoint gets no Authorization header at all.
+          ...(apiKey || !selfHosted
+            ? { Authorization: `Bearer ${apiKey}` }
+            : {}),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          selfHosted
+            ? {
+                model,
+                stream: false,
+                max_tokens: 200,
+                // Asks the server for a JSON object; the prompt alone gets prose
+                // back from local models. Servers that ignore it still get the
+                // tolerant parse.
+                response_format: { type: 'json_object' },
+                messages: [
+                  {
+                    role: 'system',
+                    content: hudSummaryInstructions(context?.locale),
+                  },
+                  { role: 'user', content: hudSummaryInput(context) },
+                ],
+              }
+            : {
+                model,
+                instructions: hudSummaryInstructions(context?.locale),
+                input: hudSummaryInput(context),
+                text: { format: HUD_SUMMARY_RESPONSE_FORMAT },
+                reasoning: { effort: 'minimal' },
+                max_output_tokens: 200,
+              },
+        ),
       },
-      body: JSON.stringify({
-        model:
-          process.env.OPENAI_HUD_SUMMARY_MODEL ||
-          OPENAI_HUD_SUMMARY_MODEL_DEFAULT,
-        instructions: hudSummaryInstructions(context?.locale),
-        input: hudSummaryInput(context),
-        text: { format: HUD_SUMMARY_RESPONSE_FORMAT },
-        reasoning: { effort: 'minimal' },
-        max_output_tokens: 200,
-      }),
-    });
+    );
     const data = await response.json().catch(() => ({}));
     const { summary, feedState } = parseHudSummaryReply(
-      extractOpenAiResponseText(data),
+      selfHosted ? extractChatText(data) : extractOpenAiResponseText(data),
       context?.locale,
     );
     res.statusCode = response.ok && summary ? 200 : response.status || 502;

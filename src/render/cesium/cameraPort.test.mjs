@@ -416,7 +416,11 @@ test('a pose measures heading, pitch and roll as Cesium does, and leaves the cam
     const pitch = camera.pitch;
     const roll = camera.roll;
     assert.equal(pose.heading, heading, `heading ${k}`);
-    assert.ok(Math.abs(pose.pitch - pitch) < 1e-12, `pitch ${k}`);
+    // Near the pole pitch is PI/2 - acos(dz) with dz ≈ 1, so the last
+    // digits of Cesium's round-trip read differ by ~1e-11; elsewhere it
+    // agrees to ~1e-15. The looser bound is for that conditioning only.
+    const pitchTol = Math.abs(pitch) > Math.PI / 2 - 1e-4 ? 1e-10 : 1e-12;
+    assert.ok(Math.abs(pose.pitch - pitch) < pitchTol, `pitch ${k}`);
     const turn = Math.abs(pose.roll - roll);
     assert.ok(Math.min(turn, 2 * Math.PI - turn) < 1e-12, `roll ${k}`);
   }

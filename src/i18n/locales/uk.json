@@ -4344,5 +4344,9 @@
   "Move down": "Перемістити вниз",
   "Click a shot to go to it, double-click to rename.": "Клацніть кадр, щоб перейти до нього, двічі — щоб перейменувати.",
   "Back to live at the starting view": "Повернутися до прямого ефіру в початковому вигляді",
-  "Exit cockpit to fly to a bike share city": "Вийдіть із кабіни, щоб перелетіти до міста з прокатом велосипедів"
+  "Exit cockpit to fly to a bike share city": "Вийдіть із кабіни, щоб перелетіти до міста з прокатом велосипедів",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "Спрямовує текстовий чат і зведення HUD на ваш власний сервер, сумісний з OpenAI (Ollama, llama.cpp, vLLM, LM Studio…). Голос залишається у хмарних провайдерів. Залиште порожнім для api.openai.com.",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "Ідентифікатор моделі, яку endpoint віддає для текстового чату (самостійно розміщений сервер використовує власні назви). Типово gpt-4.1-mini.",
+  "Local configuration — your own server, no key needed": "Локальна конфігурація — ваш власний сервер, ключ не потрібен",
+  "{name} must be an http(s) URL": "{name} має бути http(s)-URL"
 }

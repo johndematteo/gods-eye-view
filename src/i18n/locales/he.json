@@ -4241,5 +4241,9 @@
   "Move down": "הזזה למטה",
   "Click a shot to go to it, double-click to rename.": "לחץ על שוט כדי לעבור אליו, לחיצה כפולה לשינוי שם.",
   "Back to live at the starting view": "חזרה לשידור החי בתצוגת הפתיחה",
-  "Exit cockpit to fly to a bike share city": "צא מתא הטייס כדי לטוס לעיר עם שיתוף אופניים"
+  "Exit cockpit to fly to a bike share city": "צא מתא הטייס כדי לטוס לעיר עם שיתוף אופניים",
+  "Point typed chat and the HUD summary at your own OpenAI-compatible server (Ollama, llama.cpp, vLLM, LM Studio…). Voice stays on the cloud providers. Leave blank for api.openai.com.": "מכוון את הצ׳אט הכתוב ואת סיכום ה-HUD לשרת OpenAI-תואם משלך (Ollama, llama.cpp, vLLM, LM Studio…). השליטה בקול נשארת אצל ספקי הענן. השאר ריק עבור api.openai.com.",
+  "Model id the endpoint serves for typed chat (a self-hosted one serves its own names). Defaults to gpt-4.1-mini.": "מזהה המודל שהנקודה מספקת לצ׳אט הכתוב (שרת מאוחסן-עצמי מספק את השמות שלו). ברירת מחדל: gpt-4.1-mini.",
+  "Local configuration — your own server, no key needed": "הגדרה מקומית — שרת משלך, בלי מפתח",
+  "{name} must be an http(s) URL": "{name} חייב להיות כתובת http(s)"
 }
